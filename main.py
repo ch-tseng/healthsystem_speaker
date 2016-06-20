@@ -16,6 +16,7 @@ echoSR04 = 37
 lengthCM_SR04 = 90  #距離SR04在幾公分以內, 才認定為正開始使用照護系統
 timeLasted_SR04 = 2  #有人站在SR04面前持續了幾秒後, 才認定為要始用照護系統
 nextWelcomeTimer = 180  #上次Welcome之後, 至少要隔多久才能再Welcome 
+nextAskComeHereTimer = 300  #發出邀請使用語音的時間間隔
 
 #speakerName = ["Bruce", "Theresa", "Angela" "TW_LIT_AKoan", "TW_SPK_AKoan"]
 
@@ -25,7 +26,7 @@ tmpTime_SR04 = 0  #開始計時時的秒數, 用於計算timeLasted_SR04
 statusSR04 = 0
 
 tmpLastWelcomeTime = 0  #上次的歡迎時間
-tmpLastAskForHere = 0	#上次的請經過的人(PIR)使用時間
+tmpLastAskForHere = 0	#上次邀請經過的人(PIR)使用時間
 
 import RPi.GPIO as GPIO
 import time
@@ -369,6 +370,7 @@ try:
 			                if (tmpLastWelcomeTime == 0 or (timeit.default_timer() - tmpLastWelcomeTime)>nextWelcomeTimer):
 						logger.info( str(nowDistance) + "cm  --> 距離上次Welcome時間也夠長, 啟動體重計電源, 發出氣象訊息..")
 	                        		tmpLastWelcomeTime = timeit.default_timer()
+						tmpLastAskForHere = timeit.default_timer()  #將邀請使用的聲音也延後, 避免兩種語音同時發出
 
 						GPIO.output(pinOutControl, GPIO.HIGH)
 	                                        time.sleep(0.2)
@@ -396,7 +398,7 @@ try:
 				tmpTime_SR04 = 0
 
 			else:
-				if (timeit.default_timer() - tmpLastAskForHere) > nextWelcomeTimer:	#如果距離上次welcome時間過了很久
+				if (timeit.default_timer() - tmpLastAskForHere) > nextAskComeHereTimer:	#如果距離上次welcome時間過了很久
 					if statusPIR==1:	#如果有人在附近
 						tmpLastAskForHere = timeit.default_timer()
 						word_3 = getWAV_3()
